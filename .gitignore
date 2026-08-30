@@ -1,0 +1,9 @@
+.env
+__pycache__/
+*.pyc
+.venv/
+data/attacks.jsonl
+evals/results/*.json
+.DS_Store
+
+CLAUDE.md
