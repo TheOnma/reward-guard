@@ -1,0 +1,134 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>RewardGuard — Judge vs Verifier</title>
+<style>
+  :root { --bg:#0b0e14; --panel:#141922; --line:#232b38; --fg:#e6edf3; --muted:#8b98a9;
+          --pass:#f85149; --passbg:#2a1618; --reject:#3fb950; --rejectbg:#12261a; --accent:#58a6ff; }
+  * { box-sizing:border-box; }
+  body { margin:0; background:var(--bg); color:var(--fg); font:15px/1.5 -apple-system,Segoe UI,Roboto,sans-serif; }
+  header { padding:22px 28px; border-bottom:1px solid var(--line); }
+  h1 { margin:0 0 4px; font-size:20px; }
+  .sub { color:var(--muted); font-size:13px; }
+  main { max-width:1040px; margin:0 auto; padding:24px 20px 60px; }
+  .attacks { display:flex; flex-wrap:wrap; gap:8px; margin:14px 0 6px; }
+  .attacks button, .run { background:var(--panel); color:var(--fg); border:1px solid var(--line);
+          border-radius:8px; padding:8px 12px; font-size:13px; cursor:pointer; }
+  .attacks button:hover { border-color:var(--accent); }
+  label { display:block; font-size:12px; color:var(--muted); margin:12px 0 4px; }
+  textarea, input { width:100%; background:var(--panel); color:var(--fg); border:1px solid var(--line);
+          border-radius:8px; padding:9px 11px; font:14px/1.5 ui-monospace,Menlo,monospace; resize:vertical; }
+  .row { display:flex; gap:10px; }
+  .row > div { flex:1; }
+  .run { background:var(--accent); color:#08131f; font-weight:600; border:none; padding:11px 18px; margin-top:14px; }
+  .panels { display:grid; grid-template-columns:1fr 1fr; gap:16px; margin-top:26px; }
+  @media (max-width:760px){ .panels{ grid-template-columns:1fr; } }
+  .card { background:var(--panel); border:1px solid var(--line); border-radius:12px; padding:16px; min-height:190px; }
+  .card h2 { margin:0 0 2px; font-size:15px; }
+  .card .tag { color:var(--muted); font-size:12px; }
+  .verdict { margin-top:14px; padding:10px 12px; border-radius:8px; font-weight:700; display:none; }
+  .verdict.pass { background:var(--passbg); color:var(--pass); display:block; }
+  .verdict.reject { background:var(--rejectbg); color:var(--reject); display:block; }
+  .steps { margin-top:12px; font:13px/1.5 ui-monospace,Menlo,monospace; color:var(--muted); }
+  .steps div { padding:4px 0; border-bottom:1px dashed var(--line); }
+  .steps b { color:var(--fg); }
+</style>
+</head>
+<body>
+<header>
+  <h1>RewardGuard</h1>
+  <div class="sub">A naive LLM-as-judge is fooled by a colon. The verifier isn't. Click an attack, then Run.</div>
+</header>
+<main>
+  <div class="attacks" id="attacks"></div>
+  <div class="row">
+    <div>
+      <label>Question</label>
+      <input id="prompt" value="Explain why the sky appears blue." />
+    </div>
+  </div>
+  <label>Reference answer</label>
+  <input id="reference" value="Sunlight scatters off air molecules; shorter (blue) wavelengths scatter more than longer ones (Rayleigh scattering), so the sky looks blue." />
+  <label>Candidate answer (what the model produced)</label>
+  <textarea id="candidate" rows="3">:</textarea>
+  <button class="run" id="run">Run both judges</button>
+
+  <div class="panels">
+    <div class="card">
+      <h2>Baseline · naive LLM judge</h2>
+      <div class="tag">single-prompt reward model</div>
+      <div class="verdict" id="baseVerdict"></div>
+    </div>
+    <div class="card">
+      <h2>RewardGuard · agentic verifier</h2>
+      <div class="tag">decompose → substance → false-positive gate</div>
+      <div class="verdict" id="rgVerdict"></div>
+      <div class="steps" id="rgSteps"></div>
+    </div>
+  </div>
+</main>
+<script>
+const ATTACKS = [
+  [":", "punctuation"], [".", "punctuation"],
+  ["Let's solve this problem step by step.", "opener"],
+  ["Thought process:", "opener"], ["Answer:", "opener"],
+];
+const box = document.getElementById("attacks");
+ATTACKS.forEach(([txt,type]) => {
+  const b = document.createElement("button");
+  b.textContent = JSON.stringify(txt).slice(0,28) + "  ·  " + type;
+  b.onclick = () => { document.getElementById("candidate").value = txt; };
+  box.appendChild(b);
+});
+
+function body(){ return {
+  prompt: document.getElementById("prompt").value,
+  reference: document.getElementById("reference").value,
+  candidate: document.getElementById("candidate").value,
+};}
+
+function setVerdict(el, label){
+  el.className = "verdict " + (label === "PASS" ? "pass" : "reject");
+  el.textContent = label === "PASS" ? "✅ PASS  (fooled)" : "❌ REJECT";
+}
+
+document.getElementById("run").onclick = async () => {
+  const b = body();
+  const bv = document.getElementById("baseVerdict");
+  const rv = document.getElementById("rgVerdict");
+  const steps = document.getElementById("rgSteps");
+  bv.style.display = "none"; rv.style.display = "none"; steps.innerHTML = "";
+
+  // Baseline
+  const r = await fetch("/judge", {method:"POST", headers:{"Content-Type":"application/json"}, body:JSON.stringify(b)});
+  const j = await r.json();
+  setVerdict(bv, j.label);
+
+  // RewardGuard (streamed)
+  const resp = await fetch("/verify_stream", {method:"POST", headers:{"Content-Type":"application/json"}, body:JSON.stringify(b)});
+  const reader = resp.body.getReader(); const dec = new TextDecoder(); let buf = "";
+  while (true) {
+    const {value, done} = await reader.read(); if (done) break;
+    buf += dec.decode(value, {stream:true});
+    const parts = buf.split("\n\n"); buf = parts.pop();
+    for (const p of parts) {
+      const ev = (p.match(/event: (\w+)/)||[])[1];
+      const data = (p.match(/data: (.*)/s)||[])[1];
+      if (!data) continue; const d = JSON.parse(data);
+      if (ev === "step") {
+        const div = document.createElement("div");
+        div.innerHTML = "<b>" + (d.step||"") + "</b> — " + (d.detail||"");
+        steps.appendChild(div);
+      } else if (ev === "verdict") {
+        setVerdict(rv, d.label);
+        const div = document.createElement("div"); div.style.color = "var(--fg)";
+        div.textContent = d.reason || ""; steps.appendChild(div);
+      }
+    }
+  }
+};
+</script>
+</body>
+</html>
