@@ -28,7 +28,9 @@ pytest tests/ -v                 # mocked unit tests
 python -m evals.run_eval --mock  # canned behavior, prints the comparison table shape
 ```
 
-Expected: tests pass; the mock table shows baseline ~100% FP on attacks and RewardGuard near-0% (illustrative mock numbers).
+Expected: 5 tests pass; the mock table shows baseline ≈ 99% FP on attacks and RewardGuard
+≈ 27% (illustrative — the mock verifier is a crude length/opener heuristic, not the real
+prompts; it writes `evals/results/mock.json`, never the committed real results).
 
 ## 3. Build the data (deterministic)
 
@@ -37,7 +39,9 @@ python -m rewardguard.attacks --out data/attacks.jsonl   # 36 gold cases -> 576 
 python -m evals.build_public                             # TruthfulQA slice -> evals/public.jsonl (24)
 ```
 
-Both are reproducible with no randomness. `data/attacks.jsonl` and `evals/public.jsonl` are also committed, so this step is optional for a reviewer.
+Both are fully deterministic (no randomness, no network for `attacks.py`). `evals/public.jsonl`
+and the 12-row `data/truthfulqa_slice.csv` it derives from are committed; `data/attacks.jsonl`
+is generated (gitignored) — run the first command once. A reviewer can skip `build_public`.
 
 ## 4. Primary judge: baseline vs RewardGuard + the step ablation
 
@@ -64,13 +68,15 @@ Repeat on `gpt-3.5-turbo`. `--sample-attacks 16` keeps 16 attacks per type (112 
 all 7 types) so the weaker/pricier model stays cheap; FP-rate is a rate, so it compares directly.
 
 ```bash
-for cfg in "decompose substance fp_gate" "decompose" "decompose substance"; do
-  name=$(echo $cfg | tr ' ' '_')
-  JUDGE_MODEL=gpt-3.5-turbo python -m evals.run_eval \
-    --judge $([ "$cfg" = "decompose substance fp_gate" ] && echo both || echo rewardguard) \
-    --steps $cfg --breakdown --workers 8 --sample-attacks 16 \
-    --out evals/results/res_35turbo_${name}.json
-done
+JUDGE_MODEL=gpt-3.5-turbo python -m evals.run_eval --judge both \
+  --steps decompose substance fp_gate --breakdown --workers 8 --sample-attacks 16 \
+  --out evals/results/res_35turbo_full.json
+JUDGE_MODEL=gpt-3.5-turbo python -m evals.run_eval --judge rewardguard \
+  --steps decompose --breakdown --workers 8 --sample-attacks 16 \
+  --out evals/results/res_35turbo_decompose.json
+JUDGE_MODEL=gpt-3.5-turbo python -m evals.run_eval --judge rewardguard \
+  --steps decompose substance --breakdown --workers 8 --sample-attacks 16 \
+  --out evals/results/res_35turbo_substance.json
 ```
 
 Runtime ≈ 6 min, cost ≈ **$0.35**.
@@ -82,7 +88,7 @@ python -m evals.report --files evals/results/res_4omini_*.json    # primary head
 python -m evals.report --files evals/results/res_35turbo_*.json   # cheap-tier ablation
 ```
 
-## 8. The demo
+## 7. The demo
 
 ```bash
 MOCK=1 python -m rewardguard.server   # http://localhost:8000, no keys
@@ -93,7 +99,7 @@ python -m rewardguard.server          # real verifier (needs a key)
 
 - Each result JSON carries `usage` (calls, input/output tokens, `est_cost_usd`) and `runtime_sec`.
 - RewardGuard makes up to 3 calls per judgment vs the baseline's 1 — budget accordingly.
-- **Whole 6-run ablation (both tiers): ≈ $0.78, ≈ 28 min** at `gpt-4o-mini` + `gpt-3.5-turbo`.
+- **Whole 6-run ablation (both tiers): ≈ $0.78, ≈ 26 min** at `gpt-4o-mini` + `gpt-3.5-turbo`.
 - Headline (primary judge `gpt-4o-mini`): master-key attack-FP **19.1% → 1.0%**; genuine
   accuracy 100% → 93.3%; terse-but-correct recall 100% → 100%.
 - Determinism: `temperature=0` + fixed `seed` are set where the SDK/model accept them (OpenAI

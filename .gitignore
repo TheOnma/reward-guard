@@ -7,3 +7,4 @@ data/attacks.jsonl
 .DS_Store
 
 CLAUDE.md
+evals/results/mock.json

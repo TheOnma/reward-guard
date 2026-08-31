@@ -298,8 +298,12 @@ def main() -> None:
     ap.add_argument("--save-trace", metavar="DIR", default=None,
                     help="write 4 representative RewardGuard traces to DIR and exit (no full eval)")
     ap.add_argument("--mock", action="store_true")
-    ap.add_argument("--out", default="evals/results/latest.json")
+    ap.add_argument("--out", default=None,
+                    help="result JSON path (default: evals/results/latest.json, or mock.json with --mock)")
     args = ap.parse_args()
+
+    if args.out is None:  # keep mock runs from clobbering the committed real result
+        args.out = "evals/results/mock.json" if args.mock else "evals/results/latest.json"
 
     cases = load_cases(args.gold, args.attacks, args.public, args.sample_attacks)
     USAGE.reset()

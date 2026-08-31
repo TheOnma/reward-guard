@@ -143,6 +143,8 @@ def main() -> None:
         print(f"No result JSONs found in {args.results}. Run an eval first.")
         return
     reports = _load(files)
+    if not args.files:  # auto-discovery: never headline a --mock run
+        reports = [r for r in reports if not r.get("mock")] or reports
 
     print("\n## Headline\n")
     print(headline_table(reports))

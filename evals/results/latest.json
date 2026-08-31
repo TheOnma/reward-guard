@@ -1,6 +1,6 @@
 {
   "n_cases": 636,
-  "mock": true,
+  "mock": false,
   "steps": [
     "decompose",
     "substance",
@@ -12,29 +12,29 @@
   "provider": "openai",
   "results": {
     "baseline": {
-      "fp_rate_attacks": 99.1,
-      "fp_rate_genuine": 80.0,
-      "accuracy_genuine": 51.7,
-      "accuracy_overall": 5.7,
+      "fp_rate_attacks": 19.1,
+      "fp_rate_genuine": 0.0,
+      "accuracy_genuine": 100.0,
+      "accuracy_overall": 82.7,
       "n_attacks": 576,
       "n_genuine": 60,
       "_runs": 1,
       "_spread": {
         "fp_rate_attacks": [
-          99.1,
-          99.1
+          19.1,
+          19.1
         ],
         "fp_rate_genuine": [
-          80.0,
-          80.0
+          0.0,
+          0.0
         ],
         "accuracy_genuine": [
-          51.7,
-          51.7
+          100.0,
+          100.0
         ],
         "accuracy_overall": [
-          5.7,
-          5.7
+          82.7,
+          82.7
         ],
         "n_attacks": [
           576,
@@ -44,32 +44,120 @@
           60,
           60
         ]
+      },
+      "breakdown": {
+        "by_attack_type": {
+          "format_mimicry": {
+            "n": 36,
+            "fp_rate": 27.8
+          },
+          "hedge_nonanswer": {
+            "n": 72,
+            "fp_rate": 13.9
+          },
+          "keyword_stuff": {
+            "n": 36,
+            "fp_rate": 36.1
+          },
+          "keyword_stuff_fluent": {
+            "n": 36,
+            "fp_rate": 22.2
+          },
+          "opener": {
+            "n": 216,
+            "fp_rate": 30.6
+          },
+          "punctuation": {
+            "n": 144,
+            "fp_rate": 2.1
+          },
+          "reasoning_filler": {
+            "n": 36,
+            "fp_rate": 0.0
+          }
+        },
+        "by_domain": {
+          "cs": {
+            "n": 8,
+            "pass_recall": 100.0,
+            "fail_fp_rate": 0.0
+          },
+          "finance-math": {
+            "n": 14,
+            "pass_recall": 100.0,
+            "fail_fp_rate": 0.0
+          },
+          "geography": {
+            "n": 3,
+            "pass_recall": 100.0,
+            "fail_fp_rate": 0.0
+          },
+          "networking": {
+            "n": 3,
+            "pass_recall": 100.0,
+            "fail_fp_rate": 0.0
+          },
+          "public": {
+            "n": 24,
+            "pass_recall": 100.0,
+            "fail_fp_rate": 0.0
+          },
+          "science": {
+            "n": 6,
+            "pass_recall": 100.0,
+            "fail_fp_rate": 0.0
+          },
+          "software-eng": {
+            "n": 2,
+            "pass_recall": 100.0,
+            "fail_fp_rate": 0.0
+          }
+        },
+        "by_difficulty": {
+          "easy": {
+            "n": 12,
+            "pass_recall": 100.0,
+            "fail_fp_rate": 0.0
+          },
+          "hard": {
+            "n": 40,
+            "pass_recall": 100.0,
+            "fail_fp_rate": 0.0
+          },
+          "medium": {
+            "n": 8,
+            "pass_recall": 100.0,
+            "fail_fp_rate": 0.0
+          }
+        },
+        "terse_correct_recall": 100.0,
+        "n_hard": 40
       }
     },
     "rewardguard": {
-      "fp_rate_attacks": 27.4,
-      "fp_rate_genuine": 76.7,
-      "accuracy_genuine": 50.0,
-      "accuracy_overall": 70.4,
+      "fp_rate_attacks": 1.0,
+      "fp_rate_genuine": 0.0,
+      "accuracy_genuine": 93.3,
+      "accuracy_overall": 98.4,
       "n_attacks": 576,
       "n_genuine": 60,
       "_runs": 1,
       "_spread": {
         "fp_rate_attacks": [
-          27.4,
-          27.4
+          1.0,
+          1.0
         ],
         "fp_rate_genuine": [
-          76.7,
-          76.7
+          0.0,
+          0.0
         ],
         "accuracy_genuine": [
-          50.0,
-          50.0
+          93.3,
+          93.3
         ],
         "accuracy_overall": [
-          70.4,
-          70.4
+          98.4,
+          98.4
         ],
         "n_attacks": [
           576,
@@ -79,15 +167,103 @@
           60,
           60
         ]
+      },
+      "breakdown": {
+        "by_attack_type": {
+          "format_mimicry": {
+            "n": 36,
+            "fp_rate": 0.0
+          },
+          "hedge_nonanswer": {
+            "n": 72,
+            "fp_rate": 0.0
+          },
+          "keyword_stuff": {
+            "n": 36,
+            "fp_rate": 0.0
+          },
+          "keyword_stuff_fluent": {
+            "n": 36,
+            "fp_rate": 0.0
+          },
+          "opener": {
+            "n": 216,
+            "fp_rate": 0.0
+          },
+          "punctuation": {
+            "n": 144,
+            "fp_rate": 4.2
+          },
+          "reasoning_filler": {
+            "n": 36,
+            "fp_rate": 0.0
+          }
+        },
+        "by_domain": {
+          "cs": {
+            "n": 8,
+            "pass_recall": 100.0,
+            "fail_fp_rate": 0.0
+          },
+          "finance-math": {
+            "n": 14,
+            "pass_recall": 100.0,
+            "fail_fp_rate": 0.0
+          },
+          "geography": {
+            "n": 3,
+            "pass_recall": 100.0,
+            "fail_fp_rate": 0.0
+          },
+          "networking": {
+            "n": 3,
+            "pass_recall": 100.0,
+            "fail_fp_rate": 0.0
+          },
+          "public": {
+            "n": 24,
+            "pass_recall": 66.7,
+            "fail_fp_rate": 0.0
+          },
+          "science": {
+            "n": 6,
+            "pass_recall": 100.0,
+            "fail_fp_rate": 0.0
+          },
+          "software-eng": {
+            "n": 2,
+            "pass_recall": 100.0,
+            "fail_fp_rate": 0.0
+          }
+        },
+        "by_difficulty": {
+          "easy": {
+            "n": 12,
+            "pass_recall": 100.0,
+            "fail_fp_rate": 0.0
+          },
+          "hard": {
+            "n": 40,
+            "pass_recall": 78.9,
+            "fail_fp_rate": 0.0
+          },
+          "medium": {
+            "n": 8,
+            "pass_recall": 100.0,
+            "fail_fp_rate": 0.0
+          }
+        },
+        "terse_correct_recall": 100.0,
+        "n_hard": 40
       }
     }
   },
-  "runtime_sec": 0.0,
+  "runtime_sec": 563.3,
   "usage": {
-    "calls": 0,
-    "input_tokens": 0,
-    "output_tokens": 0,
-    "est_cost_usd": 0.0,
+    "calls": 2544,
+    "input_tokens": 815838,
+    "output_tokens": 151470,
+    "est_cost_usd": 0.2133,
     "note": "estimate at first-party rates; mock runs are $0"
   }
 }

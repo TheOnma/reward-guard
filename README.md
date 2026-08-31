@@ -51,7 +51,7 @@ at RL scale.
 
 `gpt-3.5-turbo` row is a deterministic 16-attacks/type subsample (112 attacks) for cost; FP-rate is
 a rate, so it compares directly. Cost of the whole 6-run ablation: **≈ $0.78** (`gpt-4o-mini` full +
-`gpt-3.5-turbo` subsampled), ~28 min wall.
+`gpt-3.5-turbo` subsampled), ~26 min wall.
 
 ## Improvement Changelog
 
@@ -59,7 +59,7 @@ a rate, so it compares directly. Cost of the whole 6-run ablation: **≈ $0.78**
 |---|---|---|---|
 | Baseline | Naive judge: candidate framed as a *"solution process (may be incomplete)"*, quick binary "on track to the reference?" call — the leniency framing from arXiv:2507.08794 | attack-FP **19.1% / 48.2%**; genuine accuracy **100% / 96.7%** | Reproduces the master-key failure *while still scoring real answers correctly* — a fair baseline, not a strawman |
 | +decompose | Candidate-blind rubric extraction (CORE CLAIM / DISQUALIFYING ERRORS / MINIMAL PASSING ANSWER) | attack-FP **100%**; genuine accuracy **50%** | Extraction only, no verdict — establishes the pipeline, catches nothing alone |
-| +substance | Reference-grounded *correctness* check, fail-closed | attack-FP → **11.1% / 36.6%**; FP on genuine wrong answers **0%**; all 9 fluent-but-wrong hard FAILs caught | Catches wrong-*and*-fluent answers, not just empty strings. Residual leak: keyword-stuffing + bare punctuation |
+| +substance | Reference-grounded *correctness* check, fail-closed | attack-FP → **11.1% / 36.6%**; FP on genuine wrong answers **0% / 3.3%**; all 9 fluent-but-wrong hard FAILs caught | Catches wrong-*and*-fluent answers, not just empty strings. Residual leak: keyword-stuffing + bare punctuation |
 | +fp_gate | Reference-grounded adversarial gate, fail-open | attack-FP → **1.0% / 6.2%**; genuine accuracy **93.3% / 91.7%**; TruthfulQA PASS-recall 100%→67% / 83%→58% | Closes the residual leak; costs ~7 pts genuine accuracy, concentrated on terse/hedged TruthfulQA "Best Answers" |
 | Two-tier | Ran the full ablation on `gpt-4o-mini` *and* `gpt-3.5-turbo` | gate's marginal contribution: **−10 pts** vs **−30 pts** | **Main contribution:** the robustness gate's value rises as the base judge gets weaker/cheaper — i.e. exactly where reward models run in practice |
 
@@ -88,17 +88,19 @@ python -m rewardguard.attacks --out data/attacks.jsonl   # gold.jsonl -> 576 att
 python -m evals.build_public                             # TruthfulQA slice -> public.jsonl
 
 # real evaluation (needs a key) — baseline vs RewardGuard on the same cases
-python -m evals.run_eval --judge both --breakdown --workers 8 --out evals/results/latest.json
+python -m evals.run_eval --judge both --breakdown --workers 8 --out evals/results/res_4omini_full.json
 
 # the step ablation (one row per config)
-python -m evals.run_eval --judge rewardguard --steps decompose            --out evals/results/rg_decompose.json
-python -m evals.run_eval --judge rewardguard --steps decompose substance  --out evals/results/rg_substance.json
+python -m evals.run_eval --judge rewardguard --steps decompose           --breakdown --out evals/results/res_4omini_decompose.json
+python -m evals.run_eval --judge rewardguard --steps decompose substance --breakdown --out evals/results/res_4omini_substance.json
 
-python -m evals.report        # -> Markdown tables + evals/results/fp_rate.png
+python -m evals.report --files evals/results/res_4omini_*.json   # -> Markdown tables + evals/results/fp_rate.png
 python -m rewardguard.server  # Judge-vs-Verifier demo at :8000  (MOCK=1 for no keys)
 ```
 
-See **[DATA.md](DATA.md)** for full dataset provenance and licensing, and **[docs/REPRODUCTION.md](docs/REPRODUCTION.md)** for the clean-environment guide.
+See **[DATA.md](DATA.md)** for dataset provenance and licensing, and
+**[docs/REPRODUCTION.md](docs/REPRODUCTION.md)** for the full clean-environment guide
+(both judge tiers, exact commands, runtime + cost).
 
 ## Architecture
 

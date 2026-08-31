@@ -31,7 +31,7 @@ Timings are targets. `[SCREEN]` = what's shown, `[VO]` = what you say.
 `[SCREEN]` Terminal: `python -m evals.run_eval --runs 1 --breakdown`.
 `[VO]` "Here's the real evaluation. Same cases for both judges: 36 hand-written pass/fail cases across two domains, 24 TruthfulQA cases — human-written truths and human-written plausible falsehoods — and 576 deterministic master-key attacks in seven flavors, from a bare colon to long reasoning-shaped filler that never commits to an answer."
 `[SCREEN]` The comparison table; point at the FP-rate row.
-`[VO]` "On gpt-4o-mini the baseline's false-positive rate on attacks is 19 percent. RewardGuard drops it to 1 percent. And it keeps the answers that matter" — `[SCREEN]` point at genuine slice — "recall on genuine correct answers stays at 93 percent, wrong answers are still caught, and the terse-but-correct probe — a bare `O(log n)` — is kept, not rejected, at 100 percent."
+`[VO]` "On gpt-4o-mini the baseline's false-positive rate on attacks is 19 percent. RewardGuard drops it to 1 percent. And it keeps the answers that matter" — `[SCREEN]` point at genuine slice — "accuracy on genuine cases stays at 93 percent, every wrong answer is still caught, and the terse-but-correct probe — a bare `O(log n)` — is kept, not rejected, at 100 percent."
 
 ## 2:45–3:45 · The comparison + the change that mattered most
 
