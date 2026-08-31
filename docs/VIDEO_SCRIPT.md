@@ -8,9 +8,9 @@ Timings are targets. `[SCREEN]` = what's shown, `[VO]` = what you say.
 
 ## 0:00–0:35 · The problem (hook first)
 
-`[SCREEN]` The demo page (`web/index.html`), candidate box containing a single `:`.
-`[VO]` "Frontier models are trained with reinforcement learning, and RL needs a reward signal that can't be gamed. The reward models we use are LLM judges — and they're trivially fooled. Watch." Click **Run**. `[SCREEN]` Baseline panel flips to **PASS (fooled)** in red.
-`[VO]` "A colon. No answer at all, and the reward model passed it. A published paper — *One Token to Fool LLM-as-a-Judge* — shows this happens up to 35 to 90 percent of the time depending on the judge, and in a real training run the policy learned to exploit it and collapsed. When the verifier breaks, the training run breaks."
+`[SCREEN]` The demo page (`web/index.html`), served with `JUDGE_MODEL=gpt-3.5-turbo` (the cheap-judge tier). Candidate box holds the opener `"Let's solve this problem step by step."` — no actual answer.
+`[VO]` "Frontier models are trained with reinforcement learning, and RL needs a reward signal that can't be gamed. The reward models we use are LLM judges — and they're trivially fooled. Watch." Click **Run** (once). `[SCREEN]` Baseline panel flips to a solid **PASS — fooled** block.
+`[VO]` "That's not an answer — it's a reasoning opener, one of the 'master keys' from the paper *One Token to Fool LLM-as-a-Judge*. The reward model rewarded it anyway. On this judge, openers get a passing reward 100 percent of the time; in a real training run the policy learned to exploit exactly this and collapsed. When the verifier breaks, the training run breaks."
 
 ## 0:35–1:00 · Who has this problem
 
@@ -20,11 +20,11 @@ Timings are targets. `[SCREEN]` = what's shown, `[VO]` = what you say.
 
 `[SCREEN]` Same page; the RewardGuard panel now streaming its steps.
 `[VO]` "RewardGuard is three cheap LLM calls. **Decompose** reads only the question and the trusted reference — never the candidate — and extracts a rubric, so the answer under test can't bend it. **Substance** is a correctness check, not a text-presence check: is what the candidate actually claims right? **The false-positive gate** is reference-grounded, not length-based — it rejects answers that commit to nothing." `[SCREEN]` RewardGuard lands on **REJECT** with the streamed trace visible.
-`[VO]` "Same colon — caught, with the reason."
+`[VO]` "Same opener — caught, with the reason: content-free master-key pattern."
 
-`[SCREEN]` Type a real correct answer, Run. Both agree PASS. Then type a fluent *wrong* answer.
-`[VO]` "And it's not just rejecting empty strings — here's a long, confident, wrong answer." `[SCREEN]` Baseline PASS, RewardGuard REJECT.
-`[VO]` "The baseline is fooled by fluency. RewardGuard checks correctness against the reference."
+`[SCREEN]` Type a real correct answer, Run. Both agree PASS. Then paste a long, confident, *wrong* answer (e.g. the `zip()`-described-as-`zip_longest` case).
+`[VO]` "Here both judges reject it — but look at *why*." `[SCREEN]` Expand RewardGuard's **substance** step.
+`[VO]` "The substance step names the exact contradiction against the reference — 'continues until the longest iterable, contradicts the core claim that it stops at the shortest.' That's the difference between pattern-matching a non-answer and actually checking correctness — and it's what lets the same pipeline keep a terse *correct* answer like a bare `O(log n)`."
 
 ## 1:45–2:45 · One realistic execution, end to end
 
@@ -57,7 +57,10 @@ Timings are targets. `[SCREEN]` = what's shown, `[VO]` = what you say.
 ---
 
 ### Shot list / prep
-- Pre-load the demo page and rehearse the three candidates (colon → correct → fluent-wrong). **Smoke-test it first with the new provider/baseline.**
-- Have `results/*.json` and the `report.py` chart ready before recording — do NOT run the paid eval live.
+- Kill any stale server (`pkill -f rewardguard.server`), then serve the demo with
+  `JUDGE_MODEL=gpt-3.5-turbo python -m rewardguard.server` and **hard-refresh** the page.
+- Rehearse the three candidates: opener (`"Let's solve this problem step by step."`) → a real
+  correct answer → a fluent *wrong* answer. Click **Run once** and wait (~3–6 s, 4 LLM calls).
+- Have `results/*.json` and the `report.py` charts ready before recording — do NOT run the paid eval live.
 - Keep the terminal font large; trim long waits in the edit.
-- All numbers above are the measured results; double-check them against your final committed `results/` before recording.
+- All numbers in this script are the measured committed results; double-check against `evals/results/` before recording.

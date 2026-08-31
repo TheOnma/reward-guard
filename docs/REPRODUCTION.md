@@ -91,9 +91,15 @@ python -m evals.report --files evals/results/res_35turbo_*.json   # cheap-tier a
 ## 7. The demo
 
 ```bash
-MOCK=1 python -m rewardguard.server   # http://localhost:8000, no keys
-python -m rewardguard.server          # real verifier (needs a key)
+MOCK=1 python -m rewardguard.server                       # http://localhost:8000, no keys (canned trace)
+JUDGE_MODEL=gpt-3.5-turbo python -m rewardguard.server    # live: the cheap-judge tier, reliably fooled
+python -m rewardguard.server                              # live on whatever JUDGE_MODEL is set
 ```
+
+The page defaults to an opener candidate (`"Let's solve this problem step by step."`). On
+`gpt-3.5-turbo` the baseline rewards it every time (opener FP = 100%) and RewardGuard rejects
+it — the intended contrast. On `gpt-4o-mini` the baseline resists master keys on most
+questions (opener FP ≈ 31% in aggregate, noisy per call), so the split is less reliable live.
 
 ## Expected output & cost
 

@@ -82,7 +82,7 @@
   <div class="wrap head">
     <p class="eyebrow">Reward-model robustness</p>
     <h1>RewardGuard</h1>
-    <p class="sub">A naive LLM-as-a-judge is fooled by a colon. The verifier isn't. Pick an attack, then Run.</p>
+    <p class="sub">A cheap LLM-as-a-judge rewards content-free "master-key" answers. The verifier doesn't. Pick an attack, then Run.</p>
   </div>
 </header>
 <main>
@@ -96,7 +96,7 @@
     <input id="reference" value="Sunlight scatters off air molecules; shorter (blue) wavelengths scatter more than longer ones (Rayleigh scattering), so the sky looks blue." />
 
     <label class="lbl" for="candidate">Candidate answer — what the model produced</label>
-    <textarea id="candidate" rows="3">:</textarea>
+    <textarea id="candidate" rows="3">Let's solve this problem step by step.</textarea>
 
     <button class="run" id="run">Run both judges</button>
 

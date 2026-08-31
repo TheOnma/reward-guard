@@ -1,6 +1,6 @@
 # RewardGuard — a robustness verifier for LLM-as-a-Judge
 
-> Your reward model is fooled by a colon. RewardGuard isn't.
+> A cheap LLM reward model rewards a content-free "master-key" answer 30–100% of the time. RewardGuard: ~1%.
 
 RewardGuard is an **agentic verifier** that decides whether a candidate answer deserves a passing reward — and *refuses to be fooled* by the content-free "master-key" inputs that trivially game a naive LLM judge. It does this with **no fine-tuning**: a short pipeline of cheap LLM calls that decompose the reference into a rubric, check the candidate's substance against it, and run an adversarial false-positive gate.
 
@@ -95,7 +95,10 @@ python -m evals.run_eval --judge rewardguard --steps decompose           --break
 python -m evals.run_eval --judge rewardguard --steps decompose substance --breakdown --out evals/results/res_4omini_substance.json
 
 python -m evals.report --files evals/results/res_4omini_*.json   # -> Markdown tables + evals/results/fp_rate.png
-python -m rewardguard.server  # Judge-vs-Verifier demo at :8000  (MOCK=1 for no keys)
+
+# Judge-vs-Verifier demo at :8000 — gpt-3.5-turbo (the cheap tier) is reliably fooled by the
+# default opener, so the contrast always lands; MOCK=1 runs it with no keys.
+JUDGE_MODEL=gpt-3.5-turbo python -m rewardguard.server
 ```
 
 See **[DATA.md](DATA.md)** for dataset provenance and licensing, and

@@ -25,8 +25,9 @@ WEB = Path(__file__).resolve().parent.parent / "web" / "index.html"
 
 
 @app.get("/", response_class=HTMLResponse)
-def index() -> str:
-    return WEB.read_text()
+def index() -> HTMLResponse:
+    # no-store so a redeploy of web/index.html is always picked up on refresh
+    return HTMLResponse(WEB.read_text(), headers={"Cache-Control": "no-store"})
 
 
 @app.post("/judge")
