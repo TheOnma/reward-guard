@@ -1,6 +1,7 @@
 """Mocked smoke tests — no network, no keys. Run: pytest tests/ -v"""
 from rewardguard.attacks import build_attacks
 from rewardguard.judges import baseline_judge, reward_guard_verify
+from evals.run_eval import load_cases, save_traces
 
 GOLD = [{"prompt": "Q?", "reference": "The answer is 42 because of reasons that are spelled out here.", "gold_label": "PASS"}]
 
@@ -26,3 +27,14 @@ def test_rewardguard_catches_master_key():
 def test_rewardguard_passes_substantive_answer():
     good = "The answer is 42, and here is the full reasoning that grounds it in the reference material provided."
     assert reward_guard_verify("Q?", GOLD[0]["reference"], good, mock=True).label == "PASS"
+
+
+def test_save_trace_writes_four_traces_plus_index(tmp_path):
+    cases = load_cases("evals/gold.jsonl", "data/attacks.jsonl", "evals/public.jsonl")
+    n = save_traces(cases, str(tmp_path), mock=True)
+    md = sorted(p.name for p in tmp_path.glob("*.md"))
+    assert n == 5  # 4 story traces + index.md
+    assert "index.md" in md
+    assert len([m for m in md if m != "index.md"]) == 4
+    assert "01-punctuation-attack-rejected.md" in md
+    assert "RewardGuard" in (tmp_path / "index.md").read_text()

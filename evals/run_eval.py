@@ -179,6 +179,111 @@ def _spread_str(pair) -> str:
     return "stable" if lo == hi else f"{lo}-{hi}"
 
 
+# --- 7.5 trajectory capture -------------------------------------------------
+# Four representative RewardGuard traces, one per outcome that tells the story.
+# Selectors match on case fields so re-running reproduces the exact same set.
+_STORY_TRACES = [
+    ("01-punctuation-attack-rejected",
+     "A bare `\":\"` master-key attack — caught by the false-positive gate.",
+     lambda c: c["category"] == "attack" and c.get("attack_type") == "punctuation" and c["candidate"] == ":"),
+    ("02-fluent-wrong-rejected",
+     "A long, confident, WRONG answer (`zip()` described as `zip_longest`) — caught by the substance step, not by length.",
+     lambda c: c["category"] == "genuine" and c["gold_label"] == "FAIL"
+     and c["candidate"].startswith("zip() is Python's parallel-iteration helper")),
+    ("03-terse-correct-kept",
+     "A bare `\"O(log n)\"` — correct and kept. Shows the gate is reference-grounded, not length-based.",
+     lambda c: c["category"] == "genuine" and c.get("probe") == "terse-correct" and c["candidate"] == "O(log n)"),
+    ("04-hedged-answer-over-rejected",
+     "A short, true, *hedged* TruthfulQA answer that commits to no crisp fact — the gate "
+     "over-rejects it as content-free. The honest failure mode from the hot take.",
+     lambda c: c["category"] == "public" and c["gold_label"] == "PASS"
+     and c["candidate"] == "The precise origin of fortune cookies is unclear"),
+]
+
+
+def _pick_story_cases(cases: list[dict]) -> list[tuple[str, str, dict]]:
+    picked = []
+    for slug, why, pred in _STORY_TRACES:
+        match = next((c for c in cases if pred(c)), None)
+        if match is None:
+            print(f"! save-trace: no case matched selector for {slug} (skipped)")
+            continue
+        picked.append((slug, why, match))
+    return picked
+
+
+def _mismatch_tag(label: str, gold: str) -> str:
+    if label == gold:
+        return " ✅"
+    if label == "PASS" and gold == "FAIL":
+        return " ← fooled (false positive)"
+    return " ← over-rejection (false negative)"
+
+
+def _fmt_trace_md(slug: str, why: str, case: dict, verdict, baseline_label: str) -> str:
+    L = [f"# {slug}", "", f"_{why}_", "",
+         "## Case", "",
+         f"- **category:** `{case['category']}`"
+         + (f" · **attack_type:** `{case.get('attack_type')}`" if case.get("attack_type") else "")
+         + (f" · **domain:** `{case.get('domain')}`" if case.get("domain") else "")
+         + (f" · **probe:** `{case.get('probe')}`" if case.get("probe") else ""),
+         f"- **gold label:** `{case['gold_label']}`",
+         "", f"**Prompt**  \n{case['prompt']}",
+         "", f"**Reference**  \n{case['reference']}",
+         "", f"**Candidate**  \n```\n{case['candidate']}\n```", "",
+         "## Verdicts", "",
+         f"| Baseline (naive judge) | RewardGuard | Gold |",
+         f"|---|---|---|",
+         f"| **{baseline_label}**{_mismatch_tag(baseline_label, case['gold_label'])} "
+         f"| **{verdict.label}**{_mismatch_tag(verdict.label, case['gold_label'])} "
+         f"| {case['gold_label']} |",
+         "", f"_RewardGuard reason:_ {verdict.reason}", "",
+         "## Step trace", ""]
+    for i, s in enumerate(verdict.steps, 1):
+        head = f"### {i}. {s['step']}"
+        if "parsed" in s:
+            head += f"  → parsed: `{s['parsed']}`"
+        elif "content_free" in s:
+            head += f"  → content_free: `{s['content_free']}`"
+        elif "pass" in s:
+            head += f"  → pass: `{s['pass']}`"
+        L.append(head)
+        L.append("")
+        L.append(str(s.get("detail", "")).strip() or "_(no detail)_")
+        L.append("")
+    return "\n".join(L)
+
+
+def save_traces(cases: list[dict], out_dir: str, *, mock: bool) -> int:
+    """Write 4 representative RewardGuard traces + an index to `out_dir`. Returns file count."""
+    out = Path(out_dir)
+    out.mkdir(parents=True, exist_ok=True)
+    picked = _pick_story_cases(cases)
+    rows = []
+    for slug, why, case in picked:
+        v = reward_guard_verify(case["prompt"], case["reference"], case["candidate"],
+                                steps=("decompose", "substance", "fp_gate"), mock=mock)
+        b = baseline_judge(case["prompt"], case["reference"], case["candidate"], mock=mock)
+        (out / f"{slug}.md").write_text(_fmt_trace_md(slug, why, case, v, b))
+        rows.append((slug, case, v.label, b))
+
+    idx = ["# RewardGuard verifier trajectories", "",
+           "Four representative traces, one per outcome (CLAUDE.md §7.5). Regenerate with:",
+           "",
+           "```",
+           f"python -m evals.run_eval --judge rewardguard --save-trace {out_dir}" + (" --mock" if mock else ""),
+           "```", "",
+           "| Trace | Candidate | Baseline | RewardGuard | Gold |",
+           "|---|---|---|---|---|"]
+    for slug, case, rg, b in rows:
+        cand = case["candidate"].replace("\n", " ")
+        cand = (cand[:40] + "…") if len(cand) > 40 else cand
+        idx.append(f"| [{slug}]({slug}.md) | `{cand}` | {b} | {rg} | {case['gold_label']} |")
+    idx += ["", "Build-session trajectory: [../build-session-2026-08.md](../build-session-2026-08.md)"]
+    (out / "index.md").write_text("\n".join(idx) + "\n")
+    return len(rows) + 1
+
+
 def main() -> None:
     ap = argparse.ArgumentParser()
     ap.add_argument("--gold", default="evals/gold.jsonl")
@@ -190,12 +295,22 @@ def main() -> None:
     ap.add_argument("--workers", type=int, default=1, help="concurrent LLM calls for real runs (ignored in --mock)")
     ap.add_argument("--sample-attacks", type=int, default=0, help="keep only the first N attacks per type (0 = all)")
     ap.add_argument("--breakdown", action="store_true", help="print per-domain / per-attack-type slices")
+    ap.add_argument("--save-trace", metavar="DIR", default=None,
+                    help="write 4 representative RewardGuard traces to DIR and exit (no full eval)")
     ap.add_argument("--mock", action="store_true")
     ap.add_argument("--out", default="evals/results/latest.json")
     args = ap.parse_args()
 
     cases = load_cases(args.gold, args.attacks, args.public, args.sample_attacks)
     USAGE.reset()
+
+    if args.save_trace:
+        n = save_traces(cases, args.save_trace, mock=args.mock)
+        u = USAGE.as_dict()
+        print(f"Wrote {n} files to {args.save_trace}/  ({u['calls']} LLM calls, "
+              f"{u['input_tokens']:,}+{u['output_tokens']:,} tok)")
+        return
+
     t_start = time.time()
     report = {"n_cases": len(cases), "mock": args.mock, "steps": args.steps, "runs": args.runs,
               "sample_attacks": args.sample_attacks or None,
