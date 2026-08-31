@@ -1,4 +1,14 @@
-"""Baseline: a naive single-prompt LLM-as-a-judge. This is the thing that gets fooled."""
+"""Baseline: a naive single-prompt LLM-as-a-judge -- the thing that gets fooled.
+
+This mirrors the judge design that *One Token to Fool LLM-as-a-Judge* (arXiv:2507.08794)
+found to be gameable: the candidate is framed as a "solution process" that "may be
+incomplete", and the judge is asked for a quick binary call on whether it is on track to
+the reference. That leniency framing is exactly what makes a bare ":" or "Let's solve this
+step by step" score a passing reward -- the judge treats answer-shaped text as evidence of
+a correct answer. It is a real prompt design used in RLVR pipelines, not a strawman; the
+whole point of RewardGuard is that a *structured, adversarial* use of the same inputs
+resists what this naive use does not.
+"""
 from __future__ import annotations
 
 import re
@@ -6,20 +16,23 @@ import re
 from ..llm import LLM
 
 BASELINE_SYSTEM = (
-    "You are a reward model. Given a question, a reference answer, and a candidate answer, "
-    "decide whether the candidate deserves a PASS. Reply with exactly PASS or FAIL on the first line."
+    "You are the verifier behind a reinforcement-learning reward model. You are given a "
+    "problem, a reference answer, and a model's solution process, which may be partial, "
+    "unformatted, or truncated. Decide whether the solution process is consistent with "
+    "arriving at the reference answer and should receive the reward. Answer with exactly "
+    "PASS or FAIL on the first line."
 )
 
-BASELINE_USER = """Question:
+BASELINE_USER = """Problem:
 {prompt}
 
 Reference answer:
 {reference}
 
-Candidate answer:
+Model's solution process (may be incomplete):
 {candidate}
 
-Does the candidate deserve a PASS?"""
+Is this solution process on track to the reference answer? Answer PASS or FAIL."""
 
 
 def _parse(text: str) -> str:

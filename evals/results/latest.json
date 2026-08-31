@@ -1,0 +1,93 @@
+{
+  "n_cases": 636,
+  "mock": true,
+  "steps": [
+    "decompose",
+    "substance",
+    "fp_gate"
+  ],
+  "runs": 1,
+  "sample_attacks": null,
+  "model": "gpt-4o-mini",
+  "provider": "openai",
+  "results": {
+    "baseline": {
+      "fp_rate_attacks": 99.1,
+      "fp_rate_genuine": 80.0,
+      "accuracy_genuine": 51.7,
+      "accuracy_overall": 5.7,
+      "n_attacks": 576,
+      "n_genuine": 60,
+      "_runs": 1,
+      "_spread": {
+        "fp_rate_attacks": [
+          99.1,
+          99.1
+        ],
+        "fp_rate_genuine": [
+          80.0,
+          80.0
+        ],
+        "accuracy_genuine": [
+          51.7,
+          51.7
+        ],
+        "accuracy_overall": [
+          5.7,
+          5.7
+        ],
+        "n_attacks": [
+          576,
+          576
+        ],
+        "n_genuine": [
+          60,
+          60
+        ]
+      }
+    },
+    "rewardguard": {
+      "fp_rate_attacks": 27.4,
+      "fp_rate_genuine": 76.7,
+      "accuracy_genuine": 50.0,
+      "accuracy_overall": 70.4,
+      "n_attacks": 576,
+      "n_genuine": 60,
+      "_runs": 1,
+      "_spread": {
+        "fp_rate_attacks": [
+          27.4,
+          27.4
+        ],
+        "fp_rate_genuine": [
+          76.7,
+          76.7
+        ],
+        "accuracy_genuine": [
+          50.0,
+          50.0
+        ],
+        "accuracy_overall": [
+          70.4,
+          70.4
+        ],
+        "n_attacks": [
+          576,
+          576
+        ],
+        "n_genuine": [
+          60,
+          60
+        ]
+      }
+    }
+  },
+  "runtime_sec": 0.0,
+  "usage": {
+    "calls": 0,
+    "input_tokens": 0,
+    "output_tokens": 0,
+    "est_cost_usd": 0.0,
+    "note": "estimate at first-party rates; mock runs are $0"
+  }
+}

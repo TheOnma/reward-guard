@@ -5,3 +5,4 @@ pydantic-settings>=2.3
 python-dotenv>=1.0
 anthropic>=0.39
 openai>=1.40
+matplotlib>=3.7   # evals/report.py bar chart (optional; report.py degrades without it)
