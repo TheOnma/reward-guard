@@ -146,12 +146,14 @@ function escapeHtml(s){ return String(s).replace(/[&<>]/g, c => ({"&":"&amp;","<
 function setVerdict(el, label){
   const pass = label === "PASS";
   el.className = "verdict " + (pass ? "pass" : "reject");
+  el.style.display = "flex";   // clear the inline display:none set on reset
   el.innerHTML = pass
     ? '<span class="ico">&#10007;</span> PASS <small>fooled</small>'
     : '<span class="ico">&#10003;</span> REJECT <small>caught</small>';
 }
 function setError(el, msg){
   el.className = "verdict reject";
+  el.style.display = "flex";
   el.innerHTML = '<span class="ico">!</span> error <small>' + escapeHtml(msg) + '</small>';
 }
 
