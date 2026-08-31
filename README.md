@@ -77,8 +77,10 @@ vulnerability; it does not erase it when the underlying judge is poor.
 ## Quick start
 
 ```bash
-cp .env.example .env          # add a key; committed numbers use JUDGE_PROVIDER=openai / JUDGE_MODEL=gpt-4o-mini
+git clone https://github.com/TheOnma/reward-guard.git && cd reward-guard
+python -m venv .venv && source .venv/bin/activate      # Windows: .venv\Scripts\activate
 pip install -r requirements.txt
+cp .env.example .env          # add a key; committed numbers use JUDGE_PROVIDER=openai / JUDGE_MODEL=gpt-4o-mini
 
 pytest tests/ -v              # mocked, no keys, no network
 python -m evals.run_eval --mock           # canned behavior, no keys — see the shape
