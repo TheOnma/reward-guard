@@ -5,67 +5,119 @@
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <title>RewardGuard — Judge vs Verifier</title>
 <style>
-  :root { --bg:#0b0e14; --panel:#141922; --line:#232b38; --fg:#e6edf3; --muted:#8b98a9;
-          --pass:#f85149; --passbg:#2a1618; --reject:#3fb950; --rejectbg:#12261a; --accent:#58a6ff; }
-  * { box-sizing:border-box; }
-  body { margin:0; background:var(--bg); color:var(--fg); font:15px/1.5 -apple-system,Segoe UI,Roboto,sans-serif; }
-  header { padding:22px 28px; border-bottom:1px solid var(--line); }
-  h1 { margin:0 0 4px; font-size:20px; }
-  .sub { color:var(--muted); font-size:13px; }
-  main { max-width:1040px; margin:0 auto; padding:24px 20px 60px; }
-  .attacks { display:flex; flex-wrap:wrap; gap:8px; margin:14px 0 6px; }
-  .attacks button, .run { background:var(--panel); color:var(--fg); border:1px solid var(--line);
-          border-radius:8px; padding:8px 12px; font-size:13px; cursor:pointer; }
-  .attacks button:hover { border-color:var(--accent); }
-  label { display:block; font-size:12px; color:var(--muted); margin:12px 0 4px; }
-  textarea, input { width:100%; background:var(--panel); color:var(--fg); border:1px solid var(--line);
-          border-radius:8px; padding:9px 11px; font:14px/1.5 ui-monospace,Menlo,monospace; resize:vertical; }
-  .row { display:flex; gap:10px; }
-  .row > div { flex:1; }
-  .run { background:var(--accent); color:#08131f; font-weight:600; border:none; padding:11px 18px; margin-top:14px; }
-  .panels { display:grid; grid-template-columns:1fr 1fr; gap:16px; margin-top:26px; }
-  @media (max-width:760px){ .panels{ grid-template-columns:1fr; } }
-  .card { background:var(--panel); border:1px solid var(--line); border-radius:12px; padding:16px; min-height:190px; }
-  .card h2 { margin:0 0 2px; font-size:15px; }
-  .card .tag { color:var(--muted); font-size:12px; }
-  .verdict { margin-top:14px; padding:10px 12px; border-radius:8px; font-weight:700; display:none; }
-  .verdict.pass { background:var(--passbg); color:var(--pass); display:block; }
-  .verdict.reject { background:var(--rejectbg); color:var(--reject); display:block; }
-  .steps { margin-top:12px; font:13px/1.5 ui-monospace,Menlo,monospace; color:var(--muted); }
-  .steps div { padding:4px 0; border-bottom:1px dashed var(--line); }
-  .steps b { color:var(--fg); }
+  :root{
+    --bg:#0a0a0a; --panel:#131313; --panel-2:#1b1b1b; --line:#2b2b2b;
+    --fg:#f4f4f4; --muted:#9a9a9a; --faint:#6a6a6a;
+    --mono:ui-monospace,"SF Mono",Menlo,Consolas,monospace;
+    --sans:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+  }
+  *{box-sizing:border-box}
+  html,body{background:var(--bg)}
+  body{margin:0;color:var(--fg);font-family:var(--sans);line-height:1.55;
+       -webkit-font-smoothing:antialiased}
+  .wrap{max-width:1060px;margin:0 auto;padding:0 22px}
+
+  header{border-bottom:1px solid var(--line)}
+  .head{padding:26px 0 22px}
+  .eyebrow{font-family:var(--mono);font-size:10.5px;letter-spacing:.22em;text-transform:uppercase;
+           color:var(--faint);margin:0 0 8px}
+  h1{margin:0;font-size:27px;font-weight:800;letter-spacing:-.02em}
+  .sub{color:var(--muted);font-size:14px;margin:6px 0 0;max-width:60ch}
+
+  main{padding:26px 0 70px}
+  .lbl{display:block;font-family:var(--mono);font-size:10.5px;letter-spacing:.14em;
+       text-transform:uppercase;color:var(--faint);margin:16px 0 6px}
+  input,textarea{width:100%;background:var(--panel);color:var(--fg);border:1px solid var(--line);
+       border-radius:9px;padding:11px 13px;font-family:var(--mono);font-size:13.5px;line-height:1.5}
+  textarea{resize:vertical;min-height:64px}
+  input:focus,textarea:focus{outline:2px solid var(--fg);outline-offset:-1px;border-color:var(--fg)}
+
+  .attacks{display:flex;flex-wrap:wrap;gap:8px;margin:2px 0 4px}
+  .attacks button{background:var(--panel);color:var(--fg);border:1px dashed var(--line);
+       border-radius:999px;padding:7px 13px;font-family:var(--mono);font-size:12px;cursor:pointer;
+       transition:border-color .15s,transform .05s}
+  .attacks button:hover{border-color:var(--fg);border-style:solid}
+  .attacks button:active{transform:translateY(1px)}
+
+  .run{margin-top:16px;background:var(--fg);color:var(--bg);border:none;border-radius:9px;
+       padding:12px 22px;font-family:var(--sans);font-weight:700;font-size:14px;cursor:pointer;
+       transition:opacity .15s,transform .05s}
+  .run:hover{opacity:.88}
+  .run:active{transform:translateY(1px)}
+  .run:focus-visible{outline:2px solid var(--fg);outline-offset:3px}
+  .run:disabled{opacity:.45;cursor:default}
+  .run:disabled:hover{opacity:.45}
+
+  .panels{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-top:28px}
+  @media (max-width:760px){ .panels{grid-template-columns:1fr} }
+  .card{background:var(--panel);border:1px solid var(--line);border-radius:13px;padding:18px;
+        min-height:210px}
+  .card h2{margin:0;font-size:15px;font-weight:700;letter-spacing:-.01em}
+  .card .tag{color:var(--faint);font-family:var(--mono);font-size:11.5px;margin-top:3px}
+
+  .verdict{margin-top:16px;border-radius:9px;padding:12px 14px;font-weight:800;font-size:15px;
+           letter-spacing:.01em;display:none;align-items:center;gap:10px}
+  .verdict .ico{font-family:var(--mono);font-size:16px;line-height:1}
+  .verdict small{margin-left:auto;font-family:var(--mono);font-weight:600;font-size:10.5px;
+                 letter-spacing:.16em;text-transform:uppercase}
+  /* strictly monochrome: FOOLED = solid inverted block (alarm), CAUGHT = clean outline */
+  .verdict.pass{display:flex;background:var(--fg);color:var(--bg);border:1px solid var(--fg)}
+  .verdict.reject{display:flex;background:transparent;color:var(--fg);border:1px solid var(--fg)}
+
+  .steps{margin-top:14px;display:flex;flex-direction:column}
+  .steps > div{padding:9px 0;border-top:1px dashed var(--line);font-size:13px;color:var(--muted)}
+  .steps > div:first-child{border-top:none}
+  .steps b{display:inline-block;font-family:var(--mono);font-size:10px;letter-spacing:.12em;
+           text-transform:uppercase;color:var(--fg);background:var(--panel-2);border:1px solid var(--line);
+           border-radius:5px;padding:2px 7px;margin-right:8px}
+  .placeholder{color:var(--faint);font-family:var(--mono);font-size:12.5px;padding:10px 0}
+
+  .legend{margin-top:20px;color:var(--faint);font-family:var(--mono);font-size:11.5px;
+          display:flex;gap:20px;flex-wrap:wrap}
+  .legend b{color:var(--fg);font-weight:600}
 </style>
 </head>
 <body>
 <header>
-  <h1>RewardGuard</h1>
-  <div class="sub">A naive LLM-as-judge is fooled by a colon. The verifier isn't. Click an attack, then Run.</div>
+  <div class="wrap head">
+    <p class="eyebrow">Reward-model robustness</p>
+    <h1>RewardGuard</h1>
+    <p class="sub">A naive LLM-as-a-judge is fooled by a colon. The verifier isn't. Pick an attack, then Run.</p>
+  </div>
 </header>
 <main>
-  <div class="attacks" id="attacks"></div>
-  <div class="row">
-    <div>
-      <label>Question</label>
-      <input id="prompt" value="Explain why the sky appears blue." />
-    </div>
-  </div>
-  <label>Reference answer</label>
-  <input id="reference" value="Sunlight scatters off air molecules; shorter (blue) wavelengths scatter more than longer ones (Rayleigh scattering), so the sky looks blue." />
-  <label>Candidate answer (what the model produced)</label>
-  <textarea id="candidate" rows="3">:</textarea>
-  <button class="run" id="run">Run both judges</button>
+  <div class="wrap">
+    <div class="attacks" id="attacks"></div>
 
-  <div class="panels">
-    <div class="card">
-      <h2>Baseline · naive LLM judge</h2>
-      <div class="tag">single-prompt reward model</div>
-      <div class="verdict" id="baseVerdict"></div>
+    <label class="lbl" for="prompt">Question</label>
+    <input id="prompt" value="Explain why the sky appears blue." />
+
+    <label class="lbl" for="reference">Reference answer</label>
+    <input id="reference" value="Sunlight scatters off air molecules; shorter (blue) wavelengths scatter more than longer ones (Rayleigh scattering), so the sky looks blue." />
+
+    <label class="lbl" for="candidate">Candidate answer — what the model produced</label>
+    <textarea id="candidate" rows="3">:</textarea>
+
+    <button class="run" id="run">Run both judges</button>
+
+    <div class="panels">
+      <div class="card">
+        <h2>Baseline</h2>
+        <div class="tag">naive single-prompt reward model</div>
+        <div class="verdict" id="baseVerdict"></div>
+      </div>
+      <div class="card">
+        <h2>RewardGuard</h2>
+        <div class="tag">decompose → substance → false-positive gate</div>
+        <div class="verdict" id="rgVerdict"></div>
+        <div class="steps" id="rgSteps"><div class="placeholder">verifier trace streams here…</div></div>
+      </div>
     </div>
-    <div class="card">
-      <h2>RewardGuard · agentic verifier</h2>
-      <div class="tag">decompose → substance → false-positive gate</div>
-      <div class="verdict" id="rgVerdict"></div>
-      <div class="steps" id="rgSteps"></div>
+
+    <div class="legend">
+      <span><b>Solid block</b> = rewarded the answer</span>
+      <span><b>Outline</b> = rejected it</span>
+      <span>Ground truth for every attack: <b>FAIL</b></span>
     </div>
   </div>
 </main>
@@ -89,44 +141,78 @@ function body(){ return {
   candidate: document.getElementById("candidate").value,
 };}
 
+function escapeHtml(s){ return String(s).replace(/[&<>]/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;"}[c])); }
+
 function setVerdict(el, label){
-  el.className = "verdict " + (label === "PASS" ? "pass" : "reject");
-  el.textContent = label === "PASS" ? "✅ PASS  (fooled)" : "❌ REJECT";
+  const pass = label === "PASS";
+  el.className = "verdict " + (pass ? "pass" : "reject");
+  el.innerHTML = pass
+    ? '<span class="ico">&#10007;</span> PASS <small>fooled</small>'
+    : '<span class="ico">&#10003;</span> REJECT <small>caught</small>';
+}
+function setError(el, msg){
+  el.className = "verdict reject";
+  el.innerHTML = '<span class="ico">!</span> error <small>' + escapeHtml(msg) + '</small>';
 }
 
-document.getElementById("run").onclick = async () => {
+let running = false;
+const runBtn = document.getElementById("run");
+const RUN_LABEL = runBtn.textContent;
+
+runBtn.onclick = async () => {
+  if (running) return;                    // ignore double-clicks while a run is in flight
+  running = true; runBtn.disabled = true; runBtn.textContent = "Running…";
+
   const b = body();
   const bv = document.getElementById("baseVerdict");
   const rv = document.getElementById("rgVerdict");
   const steps = document.getElementById("rgSteps");
-  bv.style.display = "none"; rv.style.display = "none"; steps.innerHTML = "";
+  bv.className = "verdict"; bv.style.display = "none"; bv.innerHTML = "";
+  rv.className = "verdict"; rv.style.display = "none"; rv.innerHTML = "";
+  steps.innerHTML = '<div class="placeholder">running the verifier…</div>';
 
-  // Baseline
-  const r = await fetch("/judge", {method:"POST", headers:{"Content-Type":"application/json"}, body:JSON.stringify(b)});
-  const j = await r.json();
-  setVerdict(bv, j.label);
+  try {
+    // 1. Baseline — the naive judge
+    try {
+      const r = await fetch("/judge", {method:"POST", headers:{"Content-Type":"application/json"}, body:JSON.stringify(b)});
+      if (!r.ok) throw new Error("HTTP " + r.status);
+      setVerdict(bv, (await r.json()).label);
+    } catch (e) { setError(bv, e.message || String(e)); }
 
-  // RewardGuard (streamed)
-  const resp = await fetch("/verify_stream", {method:"POST", headers:{"Content-Type":"application/json"}, body:JSON.stringify(b)});
-  const reader = resp.body.getReader(); const dec = new TextDecoder(); let buf = "";
-  while (true) {
-    const {value, done} = await reader.read(); if (done) break;
-    buf += dec.decode(value, {stream:true});
-    const parts = buf.split("\n\n"); buf = parts.pop();
-    for (const p of parts) {
-      const ev = (p.match(/event: (\w+)/)||[])[1];
-      const data = (p.match(/data: (.*)/s)||[])[1];
-      if (!data) continue; const d = JSON.parse(data);
-      if (ev === "step") {
-        const div = document.createElement("div");
-        div.innerHTML = "<b>" + (d.step||"") + "</b> — " + (d.detail||"");
-        steps.appendChild(div);
-      } else if (ev === "verdict") {
-        setVerdict(rv, d.label);
-        const div = document.createElement("div"); div.style.color = "var(--fg)";
-        div.textContent = d.reason || ""; steps.appendChild(div);
+    // 2. RewardGuard — streamed trace
+    steps.innerHTML = "";
+    let gotVerdict = false;
+    const resp = await fetch("/verify_stream", {method:"POST", headers:{"Content-Type":"application/json"}, body:JSON.stringify(b)});
+    if (!resp.ok) throw new Error("HTTP " + resp.status);
+    const reader = resp.body.getReader(); const dec = new TextDecoder(); let buf = "";
+    while (true) {
+      const {value, done} = await reader.read(); if (done) break;
+      buf += dec.decode(value, {stream:true});
+      const parts = buf.split("\n\n"); buf = parts.pop();
+      for (const p of parts) {
+        const ev = (p.match(/event: (\w+)/)||[])[1];
+        const data = (p.match(/data: (.*)/s)||[])[1];
+        if (!data) continue;
+        let d; try { d = JSON.parse(data); } catch { continue; }
+        if (ev === "step" && d.step !== "decision") {
+          const div = document.createElement("div");
+          div.innerHTML = "<b>" + escapeHtml(d.step||"") + "</b> " + escapeHtml(d.detail||"");
+          steps.appendChild(div);
+        } else if (ev === "verdict") {
+          gotVerdict = true;
+          setVerdict(rv, d.label);
+          const div = document.createElement("div");
+          div.style.color = "var(--fg)"; div.style.marginTop = "8px";
+          div.textContent = d.reason || "";
+          steps.appendChild(div);
+        }
       }
     }
+    if (!gotVerdict) setError(rv, "stream ended with no verdict");
+  } catch (e) {
+    setError(rv, e.message || String(e));
+  } finally {
+    running = false; runBtn.disabled = false; runBtn.textContent = RUN_LABEL;
   }
 };
 </script>
