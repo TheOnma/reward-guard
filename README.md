@@ -6,7 +6,7 @@ RewardGuard is an **agentic verifier** that decides whether a candidate answer d
 
 ## The user & the bottleneck
 
-Frontier models are trained with reinforcement learning, and RL needs a **reward signal that can't be gamed**. The teams building those signals — AI labs, RL-environment engineers, eval companies — have a problem: **LLM-as-a-judge reward models are trivially fooled.** *One Token to Fool LLM-as-a-Judge* (arXiv:2507.08794) shows that feeding a judge just `":"` or `"Let's solve this step by step"` — with **no actual answer** — earns a *passing* reward 35–90% of the time across GPT-4o, Claude-4, and Qwen. In a real RLVR run the policy learned to exploit this and collapsed to sub-30-token garbage that still scored well. **When the verifier is broken, the training run is broken.**
+Frontier models are trained with reinforcement learning, and RL needs a **reward signal that can't be gamed**. The teams building those signals — AI labs, RL-environment engineers, eval companies — have a problem: **LLM-as-a-judge reward models are trivially fooled.** [*One Token to Fool LLM-as-a-Judge*](https://arxiv.org/abs/2507.08794) (arXiv:2507.08794) shows that feeding a judge just `":"` or `"Let's solve this step by step"` — with **no actual answer** — earns a *passing* reward 35–90% of the time across GPT-4o, Claude-4, and Qwen. In a real RLVR run the policy learned to exploit this and collapsed to sub-30-token garbage that still scored well. **When the verifier is broken, the training run is broken.**
 
 RewardGuard defends against this at the verifier layer, as an agentic workflow rather than a trained reward model.
 
@@ -57,7 +57,7 @@ a rate, so it compares directly. Cost of the whole 6-run ablation: **≈ $0.78**
 
 | Stage | What & why | Evidence (`gpt-4o-mini` / `gpt-3.5-turbo`) | Decision / learning |
 |---|---|---|---|
-| Baseline | Naive judge: candidate framed as a *"solution process (may be incomplete)"*, quick binary "on track to the reference?" call — the leniency framing from arXiv:2507.08794 | attack-FP **19.1% / 48.2%**; genuine accuracy **100% / 96.7%** | Reproduces the master-key failure *while still scoring real answers correctly* — a fair baseline, not a strawman |
+| Baseline | Naive judge: candidate framed as a *"solution process (may be incomplete)"*, quick binary "on track to the reference?" call — the leniency framing from [arXiv:2507.08794](https://arxiv.org/abs/2507.08794) | attack-FP **19.1% / 48.2%**; genuine accuracy **100% / 96.7%** | Reproduces the master-key failure *while still scoring real answers correctly* — a fair baseline, not a strawman |
 | +decompose | Candidate-blind rubric extraction (CORE CLAIM / DISQUALIFYING ERRORS / MINIMAL PASSING ANSWER) | attack-FP **100%**; genuine accuracy **50%** | Extraction only, no verdict — establishes the pipeline, catches nothing alone |
 | +substance | Reference-grounded *correctness* check, fail-closed | attack-FP → **11.1% / 36.6%**; FP on genuine wrong answers **0% / 3.3%**; all 9 fluent-but-wrong hard FAILs caught | Catches wrong-*and*-fluent answers, not just empty strings. Residual leak: keyword-stuffing + bare punctuation |
 | +fp_gate | Reference-grounded adversarial gate, fail-open | attack-FP → **1.0% / 6.2%**; genuine accuracy **93.3% / 91.7%**; TruthfulQA PASS-recall 100%→67% / 83%→58% | Closes the residual leak; costs ~7 pts genuine accuracy, concentrated on terse/hedged TruthfulQA "Best Answers" |
