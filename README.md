@@ -131,12 +131,6 @@ rewardguard/
 └── tests/test_smoke.py        # mocked
 ```
 
-## What existed before this hackathon (Rule 02 disclosure)
-
-- **Built fresh this weekend:** the reward-verifier pipeline and its prompts (`judges/verifier.py`), the master-key attack harness (`attacks.py`, 7 attack types), the evaluation + ablation + cost logging (`evals/`), the TruthfulQA normalizer, and the demo.
-- **Adapted from prior work:** the streaming-UI plumbing (SSE) reimplements a *pattern* from the builder's project **Lexica** (not copied); the self-verification + false-positive-gate *approach* draws on **Lexica** and **Alma Agent**.
-- **Coding agent used:** Claude Code. Trajectories in `/trajectories`.
-
 ## Data & safety policy
 
 Public or synthetic data only (hand-authored cases + TruthfulQA under Apache-2.0). No credentials or private data. RewardGuard is an offline evaluation tool that trains nothing and takes no consequential actions — a human reads the report.
